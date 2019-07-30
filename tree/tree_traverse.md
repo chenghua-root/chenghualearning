@@ -139,3 +139,30 @@ vector<vector<int>> levelOrder(TreeNode * root) {
   return rst;
 }
 ```
+
+# 构造
+[前序遍历和中序遍历树构造二叉树](https://www.lintcode.com/problem/construct-binary-tree-from-preorder-and-inorder-traversal/description)
+
+```c++
+TreeNode *buildTree(vector<int> &preorder, vector<int> &inorder) {
+    return doBuildTree(preorder, 0, preorder.size(), inorder, 0, inorder.size());
+}
+
+TreeNode *doBuildTree(vector<int> &pre, int a, int b, vector<int> &in, int c, int d) {
+    // 左闭右开
+    if (a >= b || c >= d) {
+        return NULL;
+    }
+    TreeNode *node = new TreeNode(pre[a]);
+
+    int k = c;
+    for (; k < d; k++) {
+        if (in[k] == pre[a]) {
+            break;
+        }
+    }
+    node->left = doBuildTree(pre, a+1, a+k-c+1, in, c, k);
+    node->right = doBuildTree(pre, a+k-c+1, b, in, k+1, d);
+    return node;
+}
+```
