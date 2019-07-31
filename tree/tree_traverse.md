@@ -166,3 +166,64 @@ TreeNode *doBuildTree(vector<int> &pre, int a, int b, vector<int> &in, int c, in
     return node;
 }
 ```
+
+# 验证二叉查找树
+[验证二叉查找树](https://www.lintcode.com/problem/validate-binary-search-tree/description)
+## 递归
+```
+bool isValidBST(TreeNode * root) {
+    int low, high;
+    return doIsValidBST(root, low, high);
+}
+
+bool doIsValidBST(TreeNode * root, int &low, int &high) {
+    if (NULL == root) return true;
+    
+    int a, b;
+    if (root->left && root->right) {
+        return doIsValidBST(root->left, low, a) && a < root->val
+               && doIsValidBST(root->right, b, high) && b > root->val;
+    } else if (root->left) {
+        high = root->val;
+        return doIsValidBST(root->left, low, a) && a < root->val;
+    } else if (root->right) {
+        low = root->val;
+        return doIsValidBST(root->right, b, high) && b > root->val;
+    } else {
+        low = root->val;
+        high = root->val;
+        return true;
+    }
+    
+    return false;
+}
+```
+## 非递归
+```
+bool isValidBST(TreeNode * root) {
+    if (NULL == root) return true;
+    
+    stack<TreeNode*> st;
+    TreeNode * node = root;
+    while (node) {
+        st.push(node);
+        node = node->left;
+    }
+    
+    int lastVal = 0;
+    bool first = true;
+    while (!st.empty()) {
+        node = st.top(); st.pop();
+        if (node->val <= lastVal && !first) return false;
+        else { lastVal = node->val; first = false;}
+        
+        node = node->right;
+        while (node) {
+            st.push(node);
+            node = node->left;
+        }
+    }
+    
+    return true;
+}
+```

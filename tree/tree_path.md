@@ -8,6 +8,27 @@ int maxDepth(TreeNode * root) {
     return max(maxDepth(root->left), maxDepth(root->right)) + 1;
 }
 ```
+# 二叉树最小深度
+[二叉树最小深度](https://www.lintcode.com/problem/minimum-depth-of-binary-tree/description)
+```
+int minDepth(TreeNode * root) {
+    return doMinDepth(root, 0);
+}
+
+int doMinDepth(TreeNode * root, int depth) {
+    if (NULL == root) return depth;
+    
+    if (root->left && root->right) {
+        return min(doMinDepth(root->left, depth+1), doMinDepth(root->right, depth+1));
+    } else if (root->left) {
+        return doMinDepth(root->left, depth+1);
+    } else if (root->right) {
+        return doMinDepth(root->right, depth+1);
+    } else {
+        return depth+1;
+    }
+}
+```
 
 # 最大路径
 
