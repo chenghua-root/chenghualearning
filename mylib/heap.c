@@ -3,6 +3,9 @@
 
 #define OK 0
 #define ERR -1
+#define ERR_EMPTY -2
+
+// http://www.voidcn.com/article/p-qgerawwv-btg.html
 
 typedef struct HeapNode HeapNode;
 struct HeapNode {
@@ -44,6 +47,7 @@ int heapGetOffset(int parent_cnt) {
     return offset >> 1;
 }
 
+/*
 void heapAdjust(Heap *heap, HeapNode * node) {
     while (node) {
         HeapNode * parent = node->parent;
@@ -70,6 +74,49 @@ void heapAdjust(Heap *heap, HeapNode * node) {
         parent->right = node_right;
     }
 }
+*/
+
+void heapAdjustUp(Heap *heap, HeapNode * node) {
+    while (node && node->parent) {
+        HeapNode *p = node->parent;
+        HeapNode *pp = p->parent;
+
+        // if (p->val >= node->val) break;
+        if (heap->cmp(p->val, node->val) >= 0) break;
+
+        HeapNode *node_left = node->left;
+        HeapNode *node_right = node->right;
+
+        HeapNode *p_left = p->left;
+        HeapNode *p_right = p->right;
+
+        node->parent = pp;
+        if (pp && pp->left == p) {
+            pp->left = node;
+        } else if (pp && pp->right == p) {
+            pp->right = node;
+        }
+
+        if (p->left == node) {
+            node->right = p_right;
+            if (p_right) p_right->parent = node;
+            node->left = p;
+        } else if (p->right == node) {
+            node->left = p_left;
+            if (p_left) p_left->parent = node;
+            node->right = p;
+        }
+        p->parent = node;
+
+        p->left = node_left;
+        p->right = node_right;
+
+        if (node_left) node_left->parent = p;
+        if (node_right) node_right->parent = p;
+    }
+    if (node && !node->parent) heap->root = node;
+}
+
 
 int heapAdd(Heap *heap, int val) {
     if (!heap) return ERR;
@@ -84,6 +131,8 @@ int heapAdd(Heap *heap, int val) {
 
     if (!heap->root) {
         heap->root = node;
+        printf("cnt=%d cur=%d\n", heap->cnt, heap->cnt+1);
+        printf("hang root\n");
         heap->cnt++;
         return OK;
     }
@@ -92,7 +141,7 @@ int heapAdd(Heap *heap, int val) {
     int child = (heap->cnt+1)%2;
     int parent_offset = heapGetOffset(parent_cnt);
     HeapNode *now = heap->root;
-    printf("cnt=%d parent_cnt=%d parent_offset=%d\n", heap->cnt, parent_cnt, parent_offset);
+    printf("cnt=%d cur=%d parent_cnt=%d parent_offset=%d\n", heap->cnt, heap->cnt+1, parent_cnt, parent_offset);
     while (parent_offset > 0) {
         if (parent_cnt & parent_offset) {
             printf("go right\n");
@@ -114,14 +163,70 @@ int heapAdd(Heap *heap, int val) {
     node->parent = now;
     heap->cnt++;
 
+    heapAdjustUp(heap, node);
+
     return OK;
 }
 
+/*
+void heapAdjustDown(Heap *heap) {
+    if (!heap || !heap->root) return;
+
+    HeapNode * node = heap->root;
+    while (node) {
+        HeapNode * node_left = node->left;
+        HeapNode * node_right  = node->right;
+
+        if (node_left && node_right) {
+        }
+    }
+}
+
+int heapGet(Heap *heap, int *val) {
+    if (!heap || heap->root) return ERR_EMPTY;
+    HeapNode * root = heap->root;
+
+    int offset = heapGetOffset(heap->cnt);
+    HeapNode *last = heap->root;
+
+    while (offset > 0) {
+        if (heap->cnt & offset) {
+            printf("go right\n");
+            last = last->right;
+        } else {
+            printf("go left\n");
+            last = last->left;
+        }
+        offset >>= 1;
+    }
+
+    HeapNode * last_parent = last->parent;
+    if (last->parent && last->parent->left == last->parent) last->parent->left = NULL;
+    if (last->parent && last->parent->right == last->parent) last->parent->right = NULL;
+
+    last->parent = NULL;
+    last->left = root->left;
+    last->right = root->right;
+
+    if (root->left) root->left->parent = last;
+    if (root->right) root->right->parent = last;
+
+    heap->root = last;
+
+    root->left = NULL;
+    root->right = NULL;
+    *val = root->val;
+    heap->cnt--;
+    free(root);
+
+    return OK;
+}
+*/
 
 void pre_traverse(HeapNode * root) {
     if (NULL == root) return;
 
-    printf("%d ", root->val+1);
+    printf("%d ", root->val);
     pre_traverse(root->left);
     pre_traverse(root->right);
 }
@@ -129,10 +234,11 @@ void pre_traverse(HeapNode * root) {
 int main() {
     int i = 0;
     Heap *heap = heapCreate(heapCmpDo);
-    for (i = 0; i < 13; ++i) {
+    for (i = 1; i < 10; ++i) {
         heapAdd(heap, i);
-        printf("\n");
-    }
+        heapAdd(heap, i);
     pre_traverse(heap->root);
     printf("\n");
+    printf("\n");
+    }
 }

@@ -146,8 +146,8 @@ void * pthread_cond_do_wait(void *arg_) {
 void * pthread_cond_do_sign(void *arg_) {
     PthreadCondArg *arg = arg_;
     int i = 0;
-    pthread_mutex_lock(&arg->mutex);
     arg->condition = true;
+    pthread_mutex_lock(&arg->mutex);
     pthread_cond_signal(&arg->cond);
     pthread_mutex_unlock(&arg->mutex);
 }
