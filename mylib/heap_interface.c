@@ -1,6 +1,8 @@
-#include<stdio.h>
-#include<stdlib.h>
-#include<stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+
+#include "util.h"
 
 #define OK 0
 #define ERR -1
@@ -8,29 +10,20 @@
 
 // 完全二叉树添加节点http://www.voidcn.com/article/p-qgerawwv-btg.html
 
-int assert(int exp, int val) {
-    if (exp != val) {
-        printf("exp=%d, get=%d", exp, val);
-        exit(-1);
-    }
-    return 0;
-}
-
 typedef struct HeapNode HeapNode;
 struct HeapNode {
     struct HeapNode *parent;
     struct HeapNode *left;
     struct HeapNode *right;
-    int val;
 };
 
-typedef int(*heapCmp)(int a, int b);
+typedef int(*heapCmp)(HeapNode *a, HeapNode *b);
 
 typedef struct Heap Heap;
 struct Heap {
     HeapNode * root;
-    int cnt;
     heapCmp cmp;
+    int cnt;
 };
 
 Heap * heapCreate(heapCmp cmp) {
@@ -55,7 +48,7 @@ void heapAdjustUp(Heap *heap, HeapNode * node) {
         HeapNode *p = node->parent;
         HeapNode *pp = p->parent;
 
-        if (heap->cmp(p->val, node->val) >= 0) break;
+        if (heap->cmp(p, node) >= 0) break;
 
         HeapNode *node_left = node->left;
         HeapNode *node_right = node->right;
@@ -90,22 +83,15 @@ void heapAdjustUp(Heap *heap, HeapNode * node) {
     if (node && !node->parent) heap->root = node;
 }
 
-
-int heapAdd(Heap *heap, int val) {
-    if (!heap) return ERR;
-
-    HeapNode *node = malloc(sizeof(HeapNode));
-    if (!node) return ERR;
-
+void heapAdd(Heap *heap, HeapNode *node) {
     node->parent = NULL;
     node->left = NULL;
     node->right = NULL;
-    node->val = val;
 
     if (!heap->root) {
         heap->root = node;
         heap->cnt++;
-        return OK;
+        return;
     }
 
     int parent_cnt = (heap->cnt+1)/2;
@@ -130,8 +116,6 @@ int heapAdd(Heap *heap, int val) {
     heap->cnt++;
 
     heapAdjustUp(heap, node);
-
-    return OK;
 }
 
 /**********************************************************************/
@@ -150,13 +134,13 @@ void heapAdjustDown(Heap *heap) {
         int cmp_left_right = 0;
 
         if (node_left) {
-            cmp_left = heap->cmp(node->val, node_left->val);
+            cmp_left = heap->cmp(node, node_left);
         }
         if (node_right) {
-            cmp_right = heap->cmp(node->val, node_right->val);
+            cmp_right = heap->cmp(node, node_right);
         }
         if (node_left && node_right) {
-            cmp_left_right = heap->cmp(node_left->val, node_right->val);
+            cmp_left_right = heap->cmp(node_left, node_right);
         }
 
         bool ex_left = false;
@@ -224,17 +208,9 @@ void heapAdjustDown(Heap *heap) {
     }
 }
 
-void pre_traverse(HeapNode * root) {
-    if (NULL == root) return;
 
-    printf("%d ", root->val);
-    pre_traverse(root->left);
-    pre_traverse(root->right);
-}
-
-
-int heapGet(Heap *heap, int *val) {
-    if (!heap || !heap->root) return ERR_EMPTY;
+HeapNode *heapGet(Heap *heap) {
+    if (!heap || !heap->root) return NULL;
     HeapNode * root = heap->root;
 
     int offset = heapGetOffset(heap->cnt);
@@ -253,7 +229,6 @@ int heapGet(Heap *heap, int *val) {
     if (last->parent && last->parent->left == last) last->parent->left = NULL;
     else if (last->parent && last->parent->right == last) last->parent->right = NULL;
 
-
     last->parent = NULL;
     last->left = root->left;
     last->right = root->right;
@@ -264,55 +239,91 @@ int heapGet(Heap *heap, int *val) {
     if (root == last) heap->root = NULL;
     else heap->root = last;
 
+    root->parent = NULL;
     root->left = NULL;
     root->right = NULL;
-    *val = root->val;
     heap->cnt--;
-    free(root);
 
     heapAdjustDown(heap);
 
-    return OK;
+    return root;
 }
 
-/******************************************test***************************/
+/***********************************test*********************************/
 
-int myHeapCmp(int a, int b) {
-    if(a < b) return 1;
-    else if (a > b) return -1;
-    else return 0;
+typedef struct testHeapNode testHeapNode;
+struct testHeapNode {
+    HeapNode heap_node_; // 嵌入
+    char * key;
+    int val;
+};
+
+int testHeapCmp(HeapNode *a, HeapNode *b) {
+    testHeapNode *na = owner(a, testHeapNode, heap_node_);
+    testHeapNode *nb = owner(b, testHeapNode, heap_node_);
+    //printf("na->key=%s, nb->key=%s\n", na->key, nb->key);
+    return strcmp(na->key, nb->key);
 }
 
-int myHeapCmpReverse(int a, int b) {
-    if(a < b) return -1;
-    else if (a > b) return 1;
-    else return 0;
+void pre_traverse(HeapNode * root) {
+    if (NULL == root) return;
+
+    testHeapNode *n = owner(root, testHeapNode, heap_node_);
+    printf("key=%s, val=%d\n", n->key, n->val);
+
+    pre_traverse(root->left);
+    pre_traverse(root->right);
 }
 
 int main() {
-    int i = 0;
-    int v = 0;
-    Heap *heap = heapCreate(myHeapCmpReverse);
     int NUM = 10;
-    for (i = 1; i <= NUM; ++i) {
-        heapAdd(heap, i);
+    int KEY_LEN = 5;
+    Heap *heap = heapCreate(testHeapCmp);
+
+    int i = 0;
+    for (i = 'a'; i < 'a' + NUM; ++i) {
+        testHeapNode * n = malloc(sizeof(testHeapNode));
+        if (!n) {
+            printf("malloc testHeapNode fail\n"); exit(-1);
+        }
+
+        n->key = malloc(KEY_LEN);
+        if (!n->key) {
+            printf("malloc node key fail\n"); exit(-1);
+        }
+        int j = 0;
+        for (j = 0; j < KEY_LEN; ++j) {
+            *(n->key+j) = (char)(i);
+        }
+        *(n->key+NUM-1) = '\n';
+        printf("key=%s\n", n->key);
+
+        n->val = i;
+
+        heapAdd(heap, &n->heap_node_);
     }
+    assert(NUM, heap->cnt);
 
     printf("pre traverse cnt=%d:\n", NUM);
     pre_traverse(heap->root);
-    printf("\n");
+    printf("\n\n");
 
-    /*
-    for (i = 1; i <= NUM; ++i) {
-        heapGet(heap, &v);
-        assert(i, v);
-    }
-    */
-    for (i = NUM; i >= 1; --i) {
-        heapGet(heap, &v);
-        printf("val=%d\n", v);
-        assert(i, v);
+    //int val = -1;
+    for (i = 0; i < NUM; ++i) {
+        HeapNode * heap_node = heapGet(heap);
+        if (NULL == heap_node) {
+            printf("get heap_node is NULL\n");
+            exit(-1);
+        }
+        testHeapNode *node = owner(heap_node, testHeapNode, heap_node_);
+        printf("get val=%d\n", node->val);
+        /*
+        if (-1 != val) {
+            assertBool(node->val > val);
+        }
+        val = node->val;
+        */
     }
 
-    assert(ERR_EMPTY, heapGet(heap, &v));
+    //assertBool(NULL == heapGet(heap));
 }
