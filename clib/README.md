@@ -1,12 +1,12 @@
 # 介绍
 本目录代码用c语言。包含：
 
--读写锁、互斥锁、条件变量、信号量的使用，pthread_lock_cond_sem.c
--利用信号量来同步，pthread_sem_sync.c
--哈希，hash.c
- -支持接口的哈希，hash_interface.c
--堆，heap.c
- -支持接口的堆heap_interface.c
+- 读写锁、互斥锁、条件变量、信号量的使用，pthread_lock_cond_sem.c
+- 利用信号量来同步，pthread_sem_sync.c
+- 哈希，hash.c
+  - 支持接口的哈希，hash_interface.c
+- 堆，heap.c
+  - 支持接口的堆heap_interface.c
 
 # c接口的实现
 有两种接口的实现：
