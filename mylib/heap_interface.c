@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stdbool.h>
+#include <limits.h>
 
 #include "util.h"
 
@@ -18,22 +20,25 @@ struct HeapNode {
 };
 
 typedef int(*heapCmp)(HeapNode *a, HeapNode *b);
+typedef void(*heapNodeDestruct)(HeapNode *a);
 
 typedef struct Heap Heap;
 struct Heap {
     HeapNode * root;
-    heapCmp cmp;
     int cnt;
+    heapCmp cmp;
+    heapNodeDestruct node_destruct;
 };
 
-Heap * heapCreate(heapCmp cmp) {
-    Heap * h = malloc(sizeof(Heap));
-    if (!h) return NULL;
+Heap *heapCreate(heapCmp cmp, heapNodeDestruct node_destruct) {
+    Heap * heap = malloc(sizeof(Heap));
+    if (!heap) return NULL;
 
-    h->root = NULL;
-    h->cnt = 0;
-    h->cmp = cmp;
-    return h;
+    heap->root = NULL;
+    heap->cnt = 0;
+    heap->cmp = cmp;
+    heap->node_destruct= node_destruct;
+    return heap;
 }
 
 int heapGetOffset(int parent_cnt) {
@@ -184,7 +189,7 @@ void heapAdjustDown(Heap *heap) {
             node_left->left = node;
             node_left->right = node_right;
 
-            node_right->parent = node_left;
+            if (node_right) node_right->parent = node_left;
 
             if (heap->root == node) heap->root = node_left;
         } else if (ex_right) {
@@ -201,7 +206,7 @@ void heapAdjustDown(Heap *heap) {
             node_right->left = node_left;
             node_right->right = node;
 
-            node_left->parent = node_right;
+            if (node_left) node_left->parent = node_right;
 
             if (heap->root == node) heap->root = node_right;
         }
@@ -249,6 +254,19 @@ HeapNode *heapGet(Heap *heap) {
     return root;
 }
 
+void heapDestruct(Heap *heap) {
+    if (!heap) return;
+    while (1) {
+        HeapNode * node = heapGet(heap);
+        if (!node) break;
+        if (heap->node_destruct) heap->node_destruct(node);
+    }
+    heap->root = NULL;
+    heap->cmp = NULL;
+    heap->cnt = 0;
+    free(heap);
+}
+
 /***********************************test*********************************/
 
 typedef struct testHeapNode testHeapNode;
@@ -261,8 +279,13 @@ struct testHeapNode {
 int testHeapCmp(HeapNode *a, HeapNode *b) {
     testHeapNode *na = owner(a, testHeapNode, heap_node_);
     testHeapNode *nb = owner(b, testHeapNode, heap_node_);
-    //printf("na->key=%s, nb->key=%s\n", na->key, nb->key);
-    return strcmp(na->key, nb->key);
+    return strcmp(na->key, nb->key); // 大顶堆
+}
+
+void testHeapNodeDestruct(HeapNode *a) {
+    testHeapNode *na = owner(a, testHeapNode, heap_node_);
+    free(na->key);
+    na->val = 0;
 }
 
 void pre_traverse(HeapNode * root) {
@@ -278,7 +301,7 @@ void pre_traverse(HeapNode * root) {
 int main() {
     int NUM = 10;
     int KEY_LEN = 5;
-    Heap *heap = heapCreate(testHeapCmp);
+    Heap *heap = heapCreate(testHeapCmp, testHeapNodeDestruct);
 
     int i = 0;
     for (i = 'a'; i < 'a' + NUM; ++i) {
@@ -296,10 +319,7 @@ int main() {
             *(n->key+j) = (char)(i);
         }
         *(n->key+NUM-1) = '\n';
-        printf("key=%s\n", n->key);
-
         n->val = i;
-
         heapAdd(heap, &n->heap_node_);
     }
     assert(NUM, heap->cnt);
@@ -308,7 +328,7 @@ int main() {
     pre_traverse(heap->root);
     printf("\n\n");
 
-    //int val = -1;
+    int val = INT_MAX; // 大顶堆
     for (i = 0; i < NUM; ++i) {
         HeapNode * heap_node = heapGet(heap);
         if (NULL == heap_node) {
@@ -317,13 +337,11 @@ int main() {
         }
         testHeapNode *node = owner(heap_node, testHeapNode, heap_node_);
         printf("get val=%d\n", node->val);
-        /*
-        if (-1 != val) {
-            assertBool(node->val > val);
-        }
+        assertBool(node->val < val);
         val = node->val;
-        */
+        free(node);
     }
 
-    //assertBool(NULL == heapGet(heap));
+    assertBool(NULL == heapGet(heap));
+    heapDestruct(heap);
 }

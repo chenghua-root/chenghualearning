@@ -1,20 +1,14 @@
-#include<stdio.h>
-#include<stdlib.h>
-#include<stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+
+#include "util.h"
 
 #define OK 0
 #define ERR -1
 #define ERR_EMPTY -2
 
 // 完全二叉树添加节点http://www.voidcn.com/article/p-qgerawwv-btg.html
-
-int assert(int exp, int val) {
-    if (exp != val) {
-        printf("exp=%d, get=%d", exp, val);
-        exit(-1);
-    }
-    return 0;
-}
 
 typedef struct HeapNode HeapNode;
 struct HeapNode {
@@ -89,7 +83,6 @@ void heapAdjustUp(Heap *heap, HeapNode * node) {
     }
     if (node && !node->parent) heap->root = node;
 }
-
 
 int heapAdd(Heap *heap, int val) {
     if (!heap) return ERR;
@@ -200,7 +193,7 @@ void heapAdjustDown(Heap *heap) {
             node_left->left = node;
             node_left->right = node_right;
 
-            node_right->parent = node_left;
+            if (node_right) node_right->parent = node_left;
 
             if (heap->root == node) heap->root = node_left;
         } else if (ex_right) {
@@ -217,7 +210,7 @@ void heapAdjustDown(Heap *heap) {
             node_right->left = node_left;
             node_right->right = node;
 
-            node_left->parent = node_right;
+            if (node_left) node_left->parent = node_right;
 
             if (heap->root == node) heap->root = node_right;
         }
@@ -277,12 +270,14 @@ int heapGet(Heap *heap, int *val) {
 
 /******************************************test***************************/
 
+// 小顶堆
 int myHeapCmp(int a, int b) {
     if(a < b) return 1;
     else if (a > b) return -1;
     else return 0;
 }
 
+// 大顶堆
 int myHeapCmpReverse(int a, int b) {
     if(a < b) return -1;
     else if (a > b) return 1;
@@ -292,7 +287,7 @@ int myHeapCmpReverse(int a, int b) {
 int main() {
     int i = 0;
     int v = 0;
-    Heap *heap = heapCreate(myHeapCmpReverse);
+    Heap *heap = heapCreate(myHeapCmp);
     int NUM = 10;
     for (i = 1; i <= NUM; ++i) {
         heapAdd(heap, i);
@@ -302,15 +297,8 @@ int main() {
     pre_traverse(heap->root);
     printf("\n");
 
-    /*
     for (i = 1; i <= NUM; ++i) {
         heapGet(heap, &v);
-        assert(i, v);
-    }
-    */
-    for (i = NUM; i >= 1; --i) {
-        heapGet(heap, &v);
-        printf("val=%d\n", v);
         assert(i, v);
     }
 

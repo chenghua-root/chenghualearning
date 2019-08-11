@@ -6,6 +6,17 @@
 #define THREAD_NUM 4
 #define TEST_CASE_NUM 20
 
+/*
+ * 题目描述：
+ *   有四个线程1、2、3、4。线程1的功能就是输出1，线程2的功能就是输出2，以此类推.........现在有四个文件ABCD。初始都为空。现要让四个文件呈如下格式：
+ *   A：1 2 3 4 1 2....
+ *   B：2 3 4 1 2 3....
+ *   C：3 4 1 2 3 4....
+ *   D：4 1 2 3 4 1....
+ * 题目说明参考：http://www.fdlly.com/p/1576456673.html
+ *
+ */
+
 typedef struct PrintArg PrintArg;
 struct PrintArg {
     sem_t *sem;
@@ -52,7 +63,6 @@ void sync_print() {
         printf("\n");
     }
 }
-
 
 int main() {
     sync_print();
