@@ -114,7 +114,7 @@ void pthread_spinlock() {
 
 /**************************condition***********************/
 /*
- * 先sign再wait，wait不会阻塞
+ * 条件变量是边缘触发, 先sign再wait的话会丢失，将丢失唤醒信号
  *
  * cond需要配合mutex使用的原因：
  *   1. 保护condition？ NO
@@ -132,6 +132,15 @@ struct PthreadCondArg {
     int cnt;
 };
 
+void * pthread_cond_do_sign(void *arg_) {
+    PthreadCondArg *arg = arg_;
+    int i = 0;
+    pthread_mutex_lock(&arg->mutex);
+    arg->condition = true;
+    pthread_cond_signal(&arg->cond);
+    pthread_mutex_unlock(&arg->mutex);
+}
+
 void * pthread_cond_do_wait(void *arg_) {
     PthreadCondArg *arg = arg_;
     int i = 0;
@@ -143,15 +152,6 @@ void * pthread_cond_do_wait(void *arg_) {
     pthread_mutex_unlock(&arg->mutex);
 }
 
-void * pthread_cond_do_sign(void *arg_) {
-    PthreadCondArg *arg = arg_;
-    int i = 0;
-    arg->condition = true;
-    pthread_mutex_lock(&arg->mutex);
-    pthread_cond_signal(&arg->cond);
-    pthread_mutex_unlock(&arg->mutex);
-}
-
 void pthread_cond() {
     PthreadCondArg *arg = &(PthreadCondArg){.condition=false, .cnt=0};
     pthread_mutex_init(&arg->mutex, NULL);
@@ -159,9 +159,11 @@ void pthread_cond() {
 
     pthread_t cond_thread;
     pthread_t sign_thread;
-    pthread_create(&sign_thread, NULL, pthread_cond_do_sign, arg); // 可以先sign再wait, 也可以先wait再sign
-    assert(0, arg->cnt);
     pthread_create(&cond_thread, NULL, pthread_cond_do_wait, arg);
+    assert(0, arg->cnt);
+    usleep(1);
+
+    pthread_create(&sign_thread, NULL, pthread_cond_do_sign, arg);
 
     pthread_join(cond_thread, NULL);
     pthread_join(sign_thread, NULL);
@@ -220,7 +222,7 @@ void pthread_sem() {
 
 int main() {
     int i = 0;
-    for (; i < 100; ++i) {
+    for (; i < 10; ++i) {
         pthread_rwlock();
         pthread_spinlock();
         pthread_cond();
