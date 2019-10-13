@@ -63,6 +63,8 @@ int maxPath(TreeNode * root, int &maxSum) {
 # 二叉树拆成链表
 [将二叉树拆成链表](https://www.lintcode.com/problem/flatten-binary-tree-to-linked-list/description)
 
+先序遍历，用二叉树的 right 指针，来表示链表中的 next 指针。
+
 ## 递归1
 
 ```c++

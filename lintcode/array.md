@@ -14,14 +14,14 @@ int kthLargestElement(int n, vector<int> &nums) {
     }
 }
 int partition(vector<int> &nums, int l, int r) { // 左闭右闭
-    int piovt = l;
+    int pivot = nums[l];
     while (l < r) {
-        while(l < r && nums[r] >= nums[piovt]) r--;
-        while(l < r && nums[l] <= nums[piovt]) l++;
-        nums[piovt] = nums[r];
+        while(l < r && nums[r] >= pivot) r--;
+        nums[l] = nums[r];
+        while(l < r && nums[l] <= pivot) l++;
         nums[r] = nums[l];
-        nums[l] = nums[piovt];
     }
+    nums[l] = pivot;
     return l;
 }
 ```
@@ -70,11 +70,11 @@ int binarySearch(vector<int> &nums, int target) {
 int maxSubArray(vector<int> &nums) {
     if (nums.empty()) return 0;
     int rst = nums[0];
-    int last = nums[0];
-    for (int i = 1; i < nums.size(); ++i) {
-        if (last > 0 ) last += nums[i];
-        else last = nums[i];
-        rst = max(rst, last);
+    int sub = 0;
+    for (int i = 0; i < nums.size(); ++i) {
+        if (last > 0 ) sub += nums[i];
+        else sub = nums[i];
+        rst = max(rst, sub);
     }
     return rst;
 }
@@ -108,8 +108,8 @@ int maxTwoSubArrays(vector<int> &nums) {
         backword[i] = mv;
     }
 
-    int rst = nums[0]+nums[1];
-    for (int i = 0; i < nums.size()-1; ++i) {
+    int rst = forword[0]+backword[1];
+    for (int i = 1; i < nums.size()-1; ++i) {
         rst = max(rst, forword[i]+backword[i+1]);
     }
 
@@ -266,9 +266,10 @@ int partition(vector<int> &nums, int left, int right) {
 
         int p = 0;
         for (int i = 1; i < prices.size(); ++i) {
-            p = max(0, p + prices[i]-prices[i-1]);
-            rst = max(rst, p);
-        }
+             if (p > 0) p += prices[i] - prices[i-1];
+             else p = prices[i] - prices[i-1];
+             rst = max(rst, p);
+         }
 
         return rst;
     }
@@ -288,6 +289,7 @@ int partition(vector<int> &nums, int left, int right) {
 ### 买卖股票III
 [买卖股票III](https://www.lintcode.com/problem/best-time-to-buy-and-sell-stock-iii/description)
 ```c++
+// 最多两笔交易
     int maxProfit(vector<int> &prices) {
         if (prices.empty()) return 0;
         // write your code here
@@ -301,7 +303,7 @@ int partition(vector<int> &nums, int left, int right) {
                 left[i] = max(left[i-1], prices[i] - minPrice);
             }
         }
-        
+
         vector<int> right(prices.size(), 0);
         int maxPrice = prices[prices.size()-1];
         for (int i = prices.size()-2; i>=0; i--) {
@@ -312,7 +314,7 @@ int partition(vector<int> &nums, int left, int right) {
                 right[i] = max(right[i+1], maxPrice - prices[i]);
             }
         }
-        
+
         int rst = 0;
         for (int i = 0; i < prices.size(); ++i) {
             rst = max(rst, left[i] + right[i]);
