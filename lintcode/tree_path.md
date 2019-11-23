@@ -28,6 +28,20 @@ int doMinDepth(TreeNode * root, int depth) {
         return depth+1;
     }
 }
+
+// 方法2
+int minDepth(TreeNode * root) {
+    if (NULL == root) return 0;
+    if (NULL != root->left && NULL != root->right)
+        return min(minDepth(root->left), minDepth(root->right)) + 1;
+    else if (NULL != root->left)
+        return minDepth(root->left) + 1;
+    else if (NULL != root->right)
+        return minDepth(root->right) + 1;
+    else return 1;
+}
+
+
 ```
 
 # 最大路径
@@ -71,17 +85,17 @@ int maxPath(TreeNode * root, int &maxSum) {
 void flatten(TreeNode * root) {
     // write your code here
     if (NULL == root) return;
-    
+
+    flatten(root->left);
+    flatten(root->right);
+
     TreeNode * right = root->right;
     root->right = root->left;
     root->left = NULL;
-    flatten(root->right);
-    
+
     TreeNode * r = root;
     while(r && r->right) r = r->right;
-    
     r->right = right;
-    flatten(r->right);
 }
 ```
 
@@ -95,12 +109,12 @@ void flatten(TreeNode * root) {
 
 void flattenDFS(TreeNode * root, stack<TreeNode *> &st) {
     if (NULL == root) return;
-    
+
     TreeNode * r = root->right;
     root->right = root->left;
     root->left = NULL;
     if (r) st.push(r);
-    
+
     if (root->right) {
         return flattenDFS(root->right, st);
     }

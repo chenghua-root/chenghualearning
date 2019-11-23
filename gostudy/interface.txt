@@ -1,0 +1,43 @@
+1. 每个变量都有一个静态类型，如int, []float64, interfece{}
+    type MyInt int
+    var i int
+    var j MyInt
+    i, j的底层类型都是int。i的静态类型是int, 但j的静态类型是MyInt.
+
+ 2. types和interface
+    type iface struct {
+        tab  *itab
+        data unsafe.Pointer
+    }
+    type itab struct {
+        inter  *interfacetype
+        _type  *_type
+        link   *itab
+        hash   uint32
+        bad    bool
+        inhash   bool
+        unused [2]byte
+        fun    [1]uintptr
+    }
+    type interfacetype struct {
+        typ  _type
+        pkgpath name
+        mhdr []imethod
+    }
+    type _type struct {
+        size uintptr
+        hash uint32
+    }
+    itab由具体类型_type以及interfacetype组成。_type表示具体类型，interfacetype表示具体类型实现的接口类型。均为动态类型的组成部分。
+
+    var r io.Reader
+    tty, err := os.OpenFile("/tmp/test.txt", os.O_RDWR, 0)
+    if err != nil {
+        return nil, err
+    }
+    r = tty
+    首先声明r的静态类型是io.Reader。r的动态类型(tab)和动态值（data）都为nil。
+    r = tty将r的动态类型变成*os.File，动态值为tty，表示打开的文件对象。这时r可以用<type, value>对来表示为<*os.File, tty>
+
+    var w io.Writer
+    w = r.(io.Writer)

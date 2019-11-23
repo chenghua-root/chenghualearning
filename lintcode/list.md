@@ -58,37 +58,27 @@ ListNode *mergeKLists(vector<ListNode *> &lists) {
 ListNode *merge(vector<ListNode*> &lists, int l, int r) {
     if (l > r) return NULL;
     if (l == r) return lists[l];
-    
+
     ListNode *lNode = merge(lists, l, (l+r)/2);
     ListNode *rNode = merge(lists, (l+r)/2 + 1, r);
-    
-    if (!lNode) return rNode;
-    if (!rNode) return lNode;
-    
-    ListNode *head = NULL, *cur = NULL;
-    if (lNode->val <= rNode->val) {
-        head = cur = lNode;
-        lNode = lNode->next;
-    } else {
-        head = cur = rNode;
-        rNode = rNode->next;
-    }
-    
+
+    ListNode head{0};
+    ListNode *cur = &head;
+
     while(lNode && rNode) {
         if (lNode->val <= rNode->val) {
             cur->next = lNode;
-            cur = cur->next;
             lNode = lNode->next;
         } else {
             cur->next = lNode;
-            cur = cur->next;
             rNode = rNode->next;
         }
+        cur = cur->next;
     }
-    
+
     if (lNode) cur->next = lNode;
     if (rNode) cur->next = rNode;
-    
-    return head;
+
+    return head->next;
 }
 ```
