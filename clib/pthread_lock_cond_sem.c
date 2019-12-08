@@ -117,10 +117,10 @@ void pthread_spinlock() {
  * 条件变量是边缘触发, 先sign再wait的话会丢失，将丢失唤醒信号
  *
  * cond需要配合mutex使用的原因：
- *   1. 保护condition？ NO
- *   2. 防止唤醒丢失？
- *         pthread_cond_wait(&cond)（线程A）判定cond不满足，准备等待(放入唤醒队列)。
- *         在睡眠之前pthread_cond_signal(线程B)发出了唤醒信号，此时还未线程A还未开始放入队列, 丢失信号。
+ *   1. 保护condition？NO
+ *   2. 防止唤醒丢失？ YES
+ *       pthread_cond_wait(&cond)（线程A）判定cond不满足，准备等待(放入唤醒队列)。
+ *       在睡眠之前pthread_cond_signal(线程B)发出了唤醒信号，此时还未线程A还未开始放入队列, 丢失信号。
  *
  */
 
@@ -128,7 +128,7 @@ typedef struct PthreadCondArg PthreadCondArg;
 struct PthreadCondArg {
     pthread_mutex_t mutex;
     pthread_cond_t cond;
-    bool condition;
+    bool condition; // 避免丢失唤醒
     int cnt;
 };
 
@@ -148,6 +148,7 @@ void * pthread_cond_do_wait(void *arg_) {
     while(!arg->condition) {
         pthread_cond_wait(&arg->cond, &arg->mutex);
     }
+    arg->condition = false;
     arg->cnt++;
     pthread_mutex_unlock(&arg->mutex);
 }
