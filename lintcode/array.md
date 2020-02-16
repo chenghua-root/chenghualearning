@@ -70,11 +70,11 @@ int binarySearch(vector<int> &nums, int target) {
 int maxSubArray(vector<int> &nums) {
     if (nums.empty()) return 0;
     int rst = nums[0];
-    int sub = 0;
+    int sub_sum = 0;
     for (int i = 0; i < nums.size(); ++i) {
-        if (last > 0 ) sub += nums[i];
-        else sub = nums[i];
-        rst = max(rst, sub);
+        if (sub_sum > 0 ) sub_sum += nums[i];
+        else sub_sum = nums[i];
+        rst = max(rst, sub_sum);
     }
     return rst;
 }

@@ -31,6 +31,7 @@ struct ThreadQueue {
   List tasks;
 };
 
+/*
 void *thread_queue_work_func(void *arg) {
   ThreadQueue *tq = arg;
   ListNode *node = NULL;
@@ -54,6 +55,32 @@ void *thread_queue_work_func(void *arg) {
     cond_wait(&tq->cond_);
   } while (1);
 }
+*/
+
+void *thread_queue_work_func(void *arg) {
+  ThreadQueue *tq = arg;
+  ListNode *node = NULL;
+  ThreadTask *task = NULL;
+
+  do {
+    do {
+      pthread_spin_lock(&tq->lock_);
+      node = list_remove_head(&tq->tasks);
+      pthread_spin_unlock(&tq->lock_);
+
+      if (NULL == node) {
+        break;
+      } else {
+        task = owner(node, ThreadTask, node_);
+        task->work_func_(task->work_func_arg_);
+      }
+    } while(1);
+
+    cond_wait(&tq->cond_);
+  } while (1);
+}
+/*
+*/
 
 int thread_queue_init(ThreadQueue *tq) {
   int ret = 0;
@@ -154,7 +181,6 @@ int main() {
         break;
       }
       pthread_spin_unlock(&tq.lock_);
-      sleep(1);
     } while(1);
 
     return 0;

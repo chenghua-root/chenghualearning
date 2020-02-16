@@ -50,7 +50,7 @@ void cond_wakeup(Cond *c) {
   pthread_mutex_unlock(&c->mtx_);
 }
 
-int cond_wait(Cond *c) {
+void cond_wait(Cond *c) {
   pthread_mutex_lock(&c->mtx_);
   while(0 == c->cnt) {
       pthread_cond_wait(&c->cond_, &c->mtx_);

@@ -5,13 +5,13 @@ ListNode * reverse(ListNode * head) {
     if (NULL == head || NULL == head->next) return head;
     
     ListNode * now = head;
-    ListNode * pre = now->next;
+    ListNode * iter = head->next;
     now->next = NULL;
-    while(pre) {
-        ListNode *tmp = pre->next;
-        pre->next = now;
-        now = pre;
-        pre = tmp;
+    while(iter) {
+        ListNode *next = iter->next;
+        iter->next = now;
+        now = iter;
+        iter = next;
     }
     return now;
 }
@@ -62,8 +62,8 @@ ListNode *merge(vector<ListNode*> &lists, int l, int r) {
     ListNode *lNode = merge(lists, l, (l+r)/2);
     ListNode *rNode = merge(lists, (l+r)/2 + 1, r);
 
-    ListNode head{0};
-    ListNode *cur = &head;
+    ListNode dummy{0};
+    ListNode *cur = &dummy;
 
     while(lNode && rNode) {
         if (lNode->val <= rNode->val) {
@@ -79,6 +79,6 @@ ListNode *merge(vector<ListNode*> &lists, int l, int r) {
     if (lNode) cur->next = lNode;
     if (rNode) cur->next = rNode;
 
-    return head->next;
+    return dummy->next;
 }
 ```
