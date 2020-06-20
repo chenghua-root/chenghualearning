@@ -28,21 +28,17 @@ ListNode *mergeKLists(vector<ListNode *> &lists) {
          }
     };
     priority_queue<ListNode*, vector<ListNode*>, cmp> heap;
-    
+
     for (auto iter = lists.begin(); iter < lists.end(); ++iter) {
         if (*iter) heap.push(*iter);
     }
 
-    ListNode *head = NULL, *now = NULL;
+    ListNode dummy;
+    ListNode *now = &dummy;
     while(!heap.empty()) {
         ListNode *tmp = heap.top(); heap.pop();
-        if (!head) {
-            head = tmp;
-            now = tmp;
-        } else {
-            now->next = tmp;
-            now = tmp;
-        }
+        now->next = tmp;
+        now = tmp;
         if (tmp->next) heap.push(tmp->next);
     }
 
